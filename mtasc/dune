@@ -1,0 +1,12 @@
+(ocamllex lexer)
+
+(executable
+ (package mtasc)
+ (public_name mtasc)
+ (libraries
+    camlp-streams extlib swflib)
+ (preprocess
+ (per_module
+    ((action (run camlp4o %{input-file})) parser)))
+ (flags
+  (:standard -w -69-38-27-39-9-50-35 -cclib -lz)))

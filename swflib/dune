@@ -1,0 +1,16 @@
+(include_subdirs no)
+
+(env
+	(_
+		(flags (-w -3-6-27))
+	)
+)
+
+(library
+	(name swflib)
+    (public_name swflib)
+	(libraries extc extlib extlib_leftovers)
+    (preprocess (pps ppx_deriving.show))
+	(modules_without_implementation as3 as3hl)
+	(wrapped false)
+)
