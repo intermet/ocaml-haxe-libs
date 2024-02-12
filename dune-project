@@ -17,12 +17,6 @@
  (depends ocaml dune))
 
 (package
- (name test) 
- (synopsis "A short synopsis")
- (description "A longer description")
- (depends ocaml dune))
-
-(package
  (name mtasc) 
  (synopsis "A short synopsis")
  (description "A longer description")
