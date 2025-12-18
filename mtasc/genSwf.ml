@@ -17,11 +17,15 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *)
 
+
 open Expr
 open Swf
 open ExtHashtbl
 open ExtString
 open ExtList
+open Extlib_leftovers
+
+module UChar = UCharExt
 
 
 type kind = 

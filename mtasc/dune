@@ -4,7 +4,7 @@
  (package mtasc)
  (public_name mtasc)
  (libraries
-    camlp-streams extlib swflib)
+    camlp-streams extlib swflib extlib_leftovers)
  (preprocess
  (per_module
     ((action (run camlp4o %{input-file})) parser)))

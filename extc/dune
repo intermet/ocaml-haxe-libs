@@ -1,15 +1,16 @@
 (include_subdirs no)
 
 (library
-	(name extc)
-    (public_name extc)
-	(libraries extlib)
-	(foreign_stubs
-		(language c)
-		(names extc_stubs)
-        (flags :standard -I zlib))
-	(modules extc)
-	(wrapped false))
+ (name extc)
+ (public_name extc)
+ (libraries extlib)
+ (foreign_stubs
+  (language c)
+  (names extc_stubs)
+  (flags :standard -I zlib))
+ (c_library_flags -lz)
+ (modules extc)
+ (wrapped false))
 
 (library
 	(name extproc)
