@@ -9,7 +9,7 @@
 (library
 	(name swflib)
     (public_name swflib)
-	(libraries decompress.zl bigstringaf extlib_leftovers extc)
+	(libraries extlib_leftovers extc)
     (preprocess (pps ppx_deriving.show))
 	(modules_without_implementation as3 as3hl)
 	(wrapped false)
