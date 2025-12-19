@@ -1,3 +1,4 @@
 (test
  (name test)
+ (deps ./1012.swf)
  (libraries swflib extlib))
