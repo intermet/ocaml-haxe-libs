@@ -1297,6 +1297,7 @@ let is_excluded (path,name) =
 		loop (List.rev path)
 
 let generate file out ~compress exprs =
+  let () = print_endline "generate" in
 	let file , linkage =
 		(try
 			let f,l = String.split file "@" in
@@ -1490,7 +1491,11 @@ let generate file out ~compress exprs =
 	in
 	let ch = IO.output_channel (open_out_bin out) in
 	Swf.write ch (header,loop [] data);
-	IO.close_out ch
+    try
+      IO.close_out ch;
+    with
+    | IO.Output_closed -> ()
+
 
 let make_header s =
 	let sl = String.nsplit s ":" in

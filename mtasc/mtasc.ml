@@ -98,72 +98,80 @@ let report ?(do_exit = true) (msg, p) etype printer =
   let epos = Lexer.get_error_pos error_printer p in
   prerr_endline (sprintf "%s : %s %s" epos etype (printer msg));
   if do_exit then exit 1
-;;
 
-try
-  let exe_ext =
-    match Sys.os_type with "Win32" | "Cygwin" -> ".exe" | _ -> ""
-  in
-  let usage =
-    "Motion-Twin ActionScript2 Compiler 1.14 - (c)2004-2008 Motion-Twin\n\
-    \ Usage : mtasc" ^ exe_ext ^ " [options] <files...>\n Options :"
-  in
-  let base_path =
-    normalize_path (try Extc.executable_path () with _ -> ".")
-  in
-  let files = ref [] in
-  let time = Sys.time () in
-  Plugin.class_path := [ base_path; ""; "/" ];
-  let args_spec =
-    [
-      ( "-pack",
-        Arg.String (fun path -> files := read_package path @ !files),
-        "<path> : compile all files in target package" );
-      ( "-cp",
-        Arg.String
-          (fun path ->
-            Plugin.class_path :=
-              parse_class_path base_path path @ !Plugin.class_path),
-        "<paths> : add classpath" );
-      ( "-v",
-        Arg.Unit
-          (fun () ->
-            Typer.verbose := true;
-            Plugin.verbose := true),
-        ": turn on verbose mode" );
-      ( "-strict",
-        Arg.Unit (fun () -> Typer.strict_mode := true),
-        ": turn on strict mode" );
-      ( "-infer",
-        Arg.Unit (fun () -> Typer.local_inference := true),
-        ": turn on local variables inference" );
-      ( "-wimp",
-        Arg.Unit (fun () -> Typer.warn_imports := true),
-        ": turn on warnings for unused imports" );
-      ( "-msvc",
-        Arg.Unit (fun () -> print_style := StyleMSVC),
-        ": use MSVC style errors" );
-      ( "-mx",
-        Arg.Unit
-          (fun () ->
-            Typer.use_components := true;
-            Parser.use_components := true;
-            GenSwf.use_components := true),
-        ": use precompiled mx package" );
-    ]
-    @ !Plugin.options
-  in
-  Arg.parse args_spec (fun file -> files := file :: !files) usage;
-  Plugin.class_path := (base_path ^ "std/") :: !Plugin.class_path;
-  if match !GenSwf.version with Some x -> x >= 8 | None -> false then
-    Plugin.class_path := (base_path ^ "std8/") :: !Plugin.class_path;
-  Hashtbl.remove Lexer.keywords "add";
-  (Parser.warning :=
-     fun msg pos -> report ~do_exit:false (msg, pos) "Warning" (fun msg -> msg));
-  if !files = [] then Arg.usage args_spec usage
-  else (
-    if !Plugin.verbose then
-      print_endline ("Classpath : " ^ String.concat ";" !Plugin.class_path);
+let () =
+  try
+    let exe_ext =
+      match Sys.os_type with "Win32" | "Cygwin" -> ".exe" | _ -> ""
+    in
+    let usage =
+      "Motion-Twin ActionScript2 Compiler 1.14 - (c)2004-2008 Motion-Twin\n\
+      \ Usage : mtasc" ^ exe_ext ^ " [options] <files...>\n Options :"
+    in
+    let base_path =
+      normalize_path (try Extc.executable_path () with _ -> ".")
+    in
+    let files = ref [] in
+    let time = Sys.time () in
+    let () = Plugin.class_path := [ base_path; ""; "/" ] in
+    let args_spec =
+      [
+        ( "-pack",
+          Arg.String (fun path -> files := read_package path @ !files),
+          "<path> : compile all files in target package" );
+        ( "-cp",
+          Arg.String
+            (fun path ->
+              Plugin.class_path :=
+                parse_class_path base_path path @ !Plugin.class_path),
+          "<paths> : add classpath" );
+        ( "-v",
+          Arg.Unit
+            (fun () ->
+              Typer.verbose := true;
+              Plugin.verbose := true),
+          ": turn on verbose mode" );
+        ( "-strict",
+          Arg.Unit (fun () -> Typer.strict_mode := true),
+          ": turn on strict mode" );
+        ( "-infer",
+          Arg.Unit (fun () -> Typer.local_inference := true),
+          ": turn on local variables inference" );
+        ( "-wimp",
+          Arg.Unit (fun () -> Typer.warn_imports := true),
+          ": turn on warnings for unused imports" );
+        ( "-msvc",
+          Arg.Unit (fun () -> print_style := StyleMSVC),
+          ": use MSVC style errors" );
+        ( "-mx",
+          Arg.Unit
+            (fun () ->
+              Typer.use_components := true;
+              Parser.use_components := true;
+              GenSwf.use_components := true),
+          ": use precompiled mx package" );
+      ]
+      @ !Plugin.options
+    in
+    let () = Arg.parse args_spec (fun file -> files := file :: !files) usage in
+    let () = Plugin.class_path := (base_path ^ "std/") :: !Plugin.class_path in
+    let () =
+      if match !GenSwf.version with Some x -> x >= 8 | None -> false then
+        Plugin.class_path := (base_path ^ "std8/") :: !Plugin.class_path
+    in
+    let () = Hashtbl.remove Lexer.keywords "add" in
+    let () =
+      Parser.warning :=
+        fun msg pos ->
+          report ~do_exit:false (msg, pos) "Warning" (fun msg -> msg)
+    in
+    let files = !files in
+    let verbose = !Plugin.verbose in
+    let () =
+      if files = [] then Arg.usage args_spec usage
+      else if verbose then
+        print_endline ("Classpath : " ^ String.concat ";" !Plugin.class_path)
+    in
     let typer =
       try Typer.create !Plugin.class_path
       with Typer.Error (Typer.Class_not_found ([], "StdPresent"), _) ->
@@ -171,24 +179,29 @@ try
           "Directory 'std' containing MTASC class headers cannot be found :\n\
            Please install it or set classpath using '-cp' so it can be found."
     in
-    List.iter
-      (fun file ->
-        let path = class_name file in
-        ignore (Typer.load_class typer path Typer.argv_pos))
-      (List.rev !files);
-    Typer.finalize typer;
-    List.iter (fun f -> f typer) !Plugin.calls;
-    if !Plugin.verbose then
-      print_endline ("Time spent : " ^ string_of_float (Sys.time () -. time)))
-with
-| Expr.Invalid_expression p ->
-    report ((), p) "parse error" (fun () -> "Invalid Expression")
-| Lexer.Error (m, p) -> report (m, p) "syntax error" Lexer.error_msg
-| Parser.Error (m, p) -> report (m, p) "parse error" Parser.error_msg
-| Typer.Error (m, p) -> report (m, p) "type error" Typer.error_msg
-| Typer.File_not_found file ->
-    prerr_endline (sprintf "File not found %s" file);
-    exit 1
-| Failure msg ->
-    prerr_endline msg;
-    exit 1
+    let () =
+      List.iter
+        (fun file ->
+          let path = class_name file in
+          ignore (Typer.load_class typer path Typer.argv_pos))
+        (List.rev files)
+    in
+    let () = Typer.finalize typer in
+    let () = List.iter (fun f -> f typer) !Plugin.calls in
+    if verbose then
+      let () =
+        print_endline ("Time spent : " ^ string_of_float (Sys.time () -. time))
+      in
+      ()
+  with
+  | Expr.Invalid_expression p ->
+      report ((), p) "parse error" (fun () -> "Invalid Expression")
+  | Lexer.Error (m, p) -> report (m, p) "syntax error" Lexer.error_msg
+  | Parser.Error (m, p) -> report (m, p) "parse error" Parser.error_msg
+  | Typer.Error (m, p) -> report (m, p) "type error" Typer.error_msg
+  | Typer.File_not_found file ->
+      prerr_endline (sprintf "File not found %s" file);
+      exit 1
+  | Failure msg ->
+      prerr_endline msg;
+      exit 1
